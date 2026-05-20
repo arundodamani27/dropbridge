@@ -21,39 +21,39 @@ export async function POST(request: Request) {
 
     if (error || !data) {
       return NextResponse.json(
-        { error: "Invalid access code" },
+        { error: "Invalid or already used code" },
         { status: 404 }
-      );
-    }
-
-    const now = new Date();
-    const expiry = new Date(data.expires_at);
-
-    if (now > expiry) {
-      return NextResponse.json(
-        { error: "File expired" },
-        { status: 410 }
       );
     }
 
     const { data: signedUrlData, error: signedUrlError } =
       await supabaseAdmin.storage
         .from("temp-files")
-        .createSignedUrl(data.file_path, 300);
+        .createSignedUrl(data.file_path, 120);
 
     if (signedUrlError) {
       return NextResponse.json(
-        { error: "Download link creation failed" },
+        { error: "Failed to create download link" },
         { status: 500 }
       );
     }
 
+    // Mark code as used immediately
     await supabaseAdmin
       .from("temporary_files")
       .update({
-        download_count: data.download_count + 1,
+        is_active: false,
       })
-      .eq("id", data.id);
+          .eq("id", data.id);
+      
+      await supabaseAdmin.storage
+        .from("temp-files")
+          .remove([data.file_path]);
+      
+      await supabaseAdmin
+        .from("temporary_files")
+        .delete()
+        .eq("id", data.id);
 
     return NextResponse.json({
       success: true,

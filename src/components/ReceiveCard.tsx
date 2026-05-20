@@ -16,7 +16,7 @@ export default function ReceiveCard() {
 
   async function handleAccess() {
     if (!code.trim()) return;
-
+    setResult(null);
     setLoading(true);
 
     const res = await fetch("/api/access", {
@@ -28,7 +28,8 @@ export default function ReceiveCard() {
     });
 
     const data = await res.json();
-    setResult(data);
+      setResult(data);
+      setCode("");
     setLoading(false);
   }
 
@@ -67,14 +68,17 @@ export default function ReceiveCard() {
         <div className="mt-8 bg-slate-800 rounded-2xl p-6 text-center">
           <p className="text-slate-400 mb-3">File Ready</p>
 
-          <a
-            href={result.downloadUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-block w-full sm:w-auto bg-green-600 px-6 py-3 rounded-xl text-white hover:bg-green-700 transition break-all"
-          >
-            Download {result.fileName}
-          </a>
+         
+
+             <button
+  onClick={() => {
+    window.open(result.downloadUrl, "_blank");
+    setResult(null);
+  }}
+  className="w-full sm:w-auto bg-green-600 px-6 py-3 rounded-xl text-white font-semibold"
+>
+  Download {result.fileName}
+</button>     
         </div>
       )}
 

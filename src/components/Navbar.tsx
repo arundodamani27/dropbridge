@@ -4,7 +4,7 @@ export default function Navbar() {
   return (
     <nav className="flex justify-between items-center px-8 py-6 border-b border-slate-800">
       <Link href="/" className="text-2xl font-bold text-white">
-        DropBridge
+        SnapBridge
       </Link>
 
       <div className="flex gap-6 text-white">
