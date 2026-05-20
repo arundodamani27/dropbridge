@@ -12,8 +12,9 @@ type AccessResult = {
 
 export default function ReceiveCard() {
   const searchParams = useSearchParams();
+  const initialCode = searchParams.get("code") || "";
 
-  const [code, setCode] = useState(() => searchParams.get("code") || "");
+  const [code, setCode] = useState(initialCode);
   const [result, setResult] = useState<AccessResult | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -23,21 +24,33 @@ export default function ReceiveCard() {
     setResult(null);
     setLoading(true);
 
-    const res = await fetch("/api/access", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        accessCode: code,
-      }),
-    });
+    try {
+      const res = await fetch("/api/access", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          accessCode: code,
+        }),
+      });
 
-    const data = await res.json();
+      const data = await res.json();
 
-    setResult(data);
-    setCode("");
-    setLoading(false);
+      if (data.downloadUrl) {
+        window.open(data.downloadUrl, "_blank");
+        setCode("");
+        setResult(null);
+      } else {
+        setResult(data);
+      }
+    } catch {
+      setResult({
+        error: "Something went wrong. Please try again.",
+      });
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -50,7 +63,7 @@ export default function ReceiveCard() {
         </h1>
 
         <p className="text-slate-400 mb-8 text-base sm:text-lg">
-          Enter the access code to securely retrieve your file.
+          Enter access code to retrieve your file.
         </p>
       </div>
 
@@ -58,6 +71,11 @@ export default function ReceiveCard() {
         <input
           value={code}
           onChange={(e) => setCode(e.target.value.toUpperCase())}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              handleAccess();
+            }
+          }}
           placeholder="Enter access code"
           className="w-full flex-1 bg-slate-800 border border-slate-700 rounded-xl px-4 py-4 text-white outline-none focus:border-blue-500"
         />
@@ -67,25 +85,9 @@ export default function ReceiveCard() {
           disabled={loading}
           className="w-full sm:w-auto bg-blue-600 px-6 py-4 rounded-xl text-white hover:bg-blue-700 transition disabled:opacity-50"
         >
-          {loading ? "Checking..." : "Get File"}
+          {loading ? "Preparing..." : "Get File"}
         </button>
       </div>
-
-      {result?.downloadUrl && (
-        <div className="mt-8 bg-slate-800 rounded-2xl p-6 text-center">
-          <p className="text-slate-400 mb-3">File Ready</p>
-
-          <button
-            onClick={() => {
-              window.open(result.downloadUrl, "_blank");
-              setResult(null);
-            }}
-            className="w-full sm:w-auto bg-green-600 px-6 py-3 rounded-xl text-white font-semibold hover:bg-green-700 transition"
-          >
-            Download {result.fileName}
-          </button>
-        </div>
-      )}
 
       {result?.error && (
         <div className="mt-8 bg-red-900/30 border border-red-700 rounded-2xl p-5 text-center">
