@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { Download, AlertCircle } from "lucide-react";
 
 type AccessResult = {
@@ -10,12 +11,15 @@ type AccessResult = {
 };
 
 export default function ReceiveCard() {
-  const [code, setCode] = useState("");
+  const searchParams = useSearchParams();
+
+  const [code, setCode] = useState(() => searchParams.get("code") || "");
   const [result, setResult] = useState<AccessResult | null>(null);
   const [loading, setLoading] = useState(false);
 
   async function handleAccess() {
     if (!code.trim()) return;
+
     setResult(null);
     setLoading(true);
 
@@ -24,12 +28,15 @@ export default function ReceiveCard() {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ accessCode: code }),
+      body: JSON.stringify({
+        accessCode: code,
+      }),
     });
 
     const data = await res.json();
-      setResult(data);
-      setCode("");
+
+    setResult(data);
+    setCode("");
     setLoading(false);
   }
 
@@ -58,7 +65,7 @@ export default function ReceiveCard() {
         <button
           onClick={handleAccess}
           disabled={loading}
-          className="w-full sm:w-auto bg-blue-600 px-6 py-4 rounded-xl text-white hover:bg-blue-700 transition"
+          className="w-full sm:w-auto bg-blue-600 px-6 py-4 rounded-xl text-white hover:bg-blue-700 transition disabled:opacity-50"
         >
           {loading ? "Checking..." : "Get File"}
         </button>
@@ -68,17 +75,15 @@ export default function ReceiveCard() {
         <div className="mt-8 bg-slate-800 rounded-2xl p-6 text-center">
           <p className="text-slate-400 mb-3">File Ready</p>
 
-         
-
-             <button
-  onClick={() => {
-    window.open(result.downloadUrl, "_blank");
-    setResult(null);
-  }}
-  className="w-full sm:w-auto bg-green-600 px-6 py-3 rounded-xl text-white font-semibold"
->
-  Download {result.fileName}
-</button>     
+          <button
+            onClick={() => {
+              window.open(result.downloadUrl, "_blank");
+              setResult(null);
+            }}
+            className="w-full sm:w-auto bg-green-600 px-6 py-3 rounded-xl text-white font-semibold hover:bg-green-700 transition"
+          >
+            Download {result.fileName}
+          </button>
         </div>
       )}
 
