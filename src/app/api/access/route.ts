@@ -26,10 +26,29 @@ export async function POST(request: Request) {
       );
     }
 
+    // Expiry check
+    if (data.expires_at && new Date(data.expires_at) < new Date()) {
+      await supabaseAdmin.storage
+        .from("temp-files")
+        .remove([data.file_path]);
+
+      await supabaseAdmin
+        .from("temporary_files")
+        .delete()
+        .eq("id", data.id);
+
+      return NextResponse.json(
+        { error: "File expired. Upload again." },
+        { status: 410 }
+      );
+    }
+
     const { data: signedUrlData, error: signedUrlError } =
       await supabaseAdmin.storage
         .from("temp-files")
-        .createSignedUrl(data.file_path, 120);
+        .createSignedUrl(data.file_path, 120, {
+          download: data.file_name,
+        });
 
     if (signedUrlError) {
       return NextResponse.json(
@@ -38,22 +57,13 @@ export async function POST(request: Request) {
       );
     }
 
-    // Mark code as used immediately
+    // Mark one-time use
     await supabaseAdmin
       .from("temporary_files")
       .update({
         is_active: false,
       })
-          .eq("id", data.id);
-      
-      await supabaseAdmin.storage
-        .from("temp-files")
-          .remove([data.file_path]);
-      
-      await supabaseAdmin
-        .from("temporary_files")
-        .delete()
-        .eq("id", data.id);
+      .eq("id", data.id);
 
     return NextResponse.json({
       success: true,
