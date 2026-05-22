@@ -1,36 +1,365 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# SnapBridge 🚀
 
-## Getting Started
+SnapBridge is a secure temporary file transfer web application that enables instant device-to-device file sharing without requiring login, email, USB drives, or third-party apps.
 
-First, run the development server:
+It was built to solve a real problem observed during college presentations, where students wasted time logging into Gmail on classroom systems just to transfer PPT files.
+
+SnapBridge makes file sharing fast, simple, and secure.
+
+---
+
+## Live Demo
+
+🔗 https://your-snapbridge.vercel.app
+
+---
+
+## Problem Statement
+
+During classroom presentations, teams often struggle to quickly transfer presentation files to the college system.
+
+Typical process:
+
+- Open Gmail
+- Log in
+- Attach file
+- Open Gmail on classroom PC
+- Log in again
+- Download attachment
+
+This wastes time and causes delays.
+
+SnapBridge solves this by allowing instant temporary file transfer between devices.
+
+---
+
+## Features
+
+### File Transfer
+- Upload files instantly
+- Drag and drop file upload
+- One-time secure access code
+- QR code sharing
+- Direct share link support
+- Instant download on another device
+
+### Security
+- No login required
+- Temporary file storage
+- Automatic file expiry after 10 minutes
+- Secure signed download URLs
+- Temporary access code system
+
+### File Support
+Supports all file types except:
+
+❌ Video files  
+❌ Audio files
+
+Examples of supported files:
+
+- PDF
+- DOC / DOCX
+- PPT / PPTX
+- ODP
+- XLS / XLSX
+- TXT
+- ZIP / RAR / 7Z
+- APK
+- Images
+- HTML
+- CSS
+- JavaScript
+- TypeScript
+- Python
+- Java
+- C / C++
+- JSON
+- XML
+- SQL
+- Shell scripts
+- and more
+
+### UI/UX
+- Mobile responsive design
+- Upload progress bar
+- Selected file preview
+- Copy access code
+- Copy direct share link
+- Clean modern interface
+
+---
+
+## Tech Stack
+
+### Frontend
+- Next.js
+- React
+- TypeScript
+- Tailwind CSS
+- React Dropzone
+- QRCode React
+- Lucide React Icons
+
+### Backend
+- Next.js API Routes
+- Supabase Storage
+- Supabase Database
+
+### Deployment
+- Vercel
+
+---
+
+## How It Works
+
+### Upload
+1. Open SnapBridge
+2. Drag & drop or choose file
+3. Upload completes
+4. Get:
+   - Access code
+   - QR code
+   - Share link
+
+### Download
+On another device:
+
+Option 1:
+- Open SnapBridge
+- Enter access code
+- Download file
+
+Option 2:
+- Scan QR code
+- Download instantly
+
+Option 3:
+- Open direct share link
+- Download file
+
+---
+
+## Project Structure
+
+```bash
+snapbridge/
+│
+├── src/
+│   ├── app/
+│   │   ├── api/
+│   │   │   ├── upload/
+│   │   │   └── access/
+│   │   ├── receive/
+│   │   ├── layout.tsx
+│   │   ├── page.tsx
+│   │   └── globals.css
+│   │
+│   ├── components/
+│   │   ├── UploadCard.tsx
+│   │   └── ReceiveCard.tsx
+│   │
+│   └── lib/
+│       └── supabase/
+│
+├── public/
+├── .env.local
+├── package.json
+└── README.md
+```
+
+---
+
+## Installation
+
+### Clone Repository
+
+```bash
+git clone https://github.com/YOUR_USERNAME/snapbridge.git
+```
+
+### Move Into Project
+
+```bash
+cd snapbridge
+```
+
+### Install Dependencies
+
+```bash
+npm install
+```
+
+### Run Development Server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+http://localhost:3000
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+---
 
-## Learn More
+## Environment Variables
 
-To learn more about Next.js, take a look at the following resources:
+Create:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+.env.local
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Add:
 
-## Deploy on Vercel
+```env
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Supabase Setup
+
+### Create Storage Bucket
+
+Create bucket:
+
+```text
+temp-files
+```
+
+---
+
+### Create Database Table
+
+Run this SQL:
+
+```sql
+create table temporary_files (
+  id uuid primary key default gen_random_uuid(),
+  access_code text unique not null,
+  file_name text not null,
+  file_path text not null,
+  mime_type text,
+  file_size bigint,
+  expires_at timestamp,
+  created_at timestamp default now()
+);
+```
+
+---
+
+## API Endpoints
+
+### Upload File
+
+```http
+POST /api/upload
+```
+
+Uploads file to Supabase storage.
+
+Returns:
+
+```json
+{
+  "success": true,
+  "accessCode": "ABC123",
+  "fileName": "presentation.pptx",
+  "expiresAt": "2026-05-21T12:00:00Z"
+}
+```
+
+---
+
+### Access File
+
+```http
+POST /api/access
+```
+
+Request:
+
+```json
+{
+  "accessCode": "ABC123"
+}
+```
+
+Returns:
+
+```json
+{
+  "success": true,
+  "fileName": "presentation.pptx",
+  "downloadUrl": "signed_url_here"
+}
+```
+
+---
+
+## Deployment (Vercel)
+
+### Step 1
+Push project to GitHub.
+
+### Step 2
+Open Vercel.
+
+### Step 3
+Import repository.
+
+### Step 4
+Add environment variables.
+
+### Step 5
+Deploy.
+
+---
+
+## Future Improvements
+
+Planned enhancements:
+
+- Multi-file upload
+- Password protected transfer
+- Custom expiry timer
+- File preview before upload
+- File transfer history
+- Better analytics
+- Dark/light mode
+- File sharing stats
+- Optional authentication
+
+---
+
+## Inspiration
+
+This project was inspired by a real college classroom problem.
+
+During presentations, teams struggled to quickly transfer PPT files to the classroom computer.
+
+Instead of relying on Gmail logins, USB drives, or messaging apps, SnapBridge was created as a simple instant solution.
+
+A small real-world inconvenience became a full-stack project.
+
+---
+
+## Author
+
+**Arun**  
+MCA Student | Aspiring Full Stack Developer
+
+LinkedIn: https://linkedin.com/in/YOUR_LINKEDIN
+
+GitHub: https://github.com/YOUR_USERNAME
+
+---
+
+## License
+
+This project is for educational and portfolio purposes.
