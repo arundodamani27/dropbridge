@@ -4,8 +4,38 @@ import { supabaseAdmin } from "@/lib/supabase/server";
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 
+const BLOCKED_EXTENSIONS = [
+  ".exe",
+  ".msi",
+  ".bat",
+  ".cmd",
+  ".scr",
+  ".com",
+  ".dll",
+  ".sys",
+  ".sh",
+  ".ps1",
+  ".vbs",
+  ".apk",
+  ".html",
+  ".htm",
+  ".svg",
+  ".zip",
+  ".rar",
+  ".7z",
+  ".iso",
+];
+
 function sanitizeFileName(name: string) {
   return name.replace(/[^a-zA-Z0-9._-]/g, "_");
+}
+
+function isBlockedFile(name: string) {
+  const lowerName = name.toLowerCase();
+
+  return BLOCKED_EXTENSIONS.some((ext) =>
+    lowerName.endsWith(ext)
+  );
 }
 
 export async function POST(request: Request) {
@@ -20,7 +50,15 @@ export async function POST(request: Request) {
       );
     }
 
-    // Block only video and audio
+    // Block dangerous extensions
+    if (isBlockedFile(file.name)) {
+      return NextResponse.json(
+        { error: "This file type is not allowed" },
+        { status: 400 }
+      );
+    }
+
+    // Block video/audio
     if (
       file.type.startsWith("video/") ||
       file.type.startsWith("audio/")
@@ -31,6 +69,7 @@ export async function POST(request: Request) {
       );
     }
 
+    // Size check
     if (file.size > MAX_FILE_SIZE) {
       return NextResponse.json(
         { error: "File exceeds 50MB limit" },
@@ -70,6 +109,7 @@ export async function POST(request: Request) {
         expires_at: expiresAt.toISOString(),
         is_active: true,
         is_accessed: false,
+        download_count: 0,
       });
 
     if (dbError) {
@@ -85,6 +125,7 @@ export async function POST(request: Request) {
       expiresAt: expiresAt.toISOString(),
       fileName: sanitizedName,
     });
+
   } catch {
     return NextResponse.json(
       { error: "Upload failed" },
